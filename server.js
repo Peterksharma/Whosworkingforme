@@ -18,8 +18,17 @@ const express = require('express');
 const inquirer = require('inquirer');
 const path = require('path');
 const chalk = require('chalk');
+const mysql = require('mysql')
 
-const connectionSettings = require('./config/connection');
+const connectionSettings = {
+  port: 3306,
+  user: "root",
+  password: "",
+  database: "employee_db",
+}
+
+const connection = mysql.createConnection(connectionSettings);
+connection.connect();
 
 //process.env.port is how to assign ports to Heroku || defaults it to 3001. 
 const PORT = process.env.PORT || 3001;
@@ -56,7 +65,7 @@ function startProgram() {
   })
 
     .then((answer) => {
-      switch (anwser.menu) {
+      switch (answer.menu) {
         case 'View all departments':
           viewDepartments();
           break;
@@ -78,7 +87,8 @@ function startProgram() {
         case 'Update an employee role':
           updateEmployee();
           break;
-        case 'Exit':
+        default:
+          quit();
       }
     })
   }
@@ -87,21 +97,50 @@ function startProgram() {
 
 // }
 
-// function viewRoles() {
-
-// }
+function viewRoles() {
+  
+  let query = "SELECT * FROM roles";
+  connectionSettings.query(query, function(err, res){
+    if (err) throw err,
+    console.table(res);
+    startScreen();
+  })
+}
 
 // function viewEmployees() {
 
-// }
+// 
 
-// function addDepartment() {
+function addDepartment() {
+  inquirer.prompt({
+    type: "input",
+    message: "What is the department name?",
+    name: "departmentName"
+  }).then(function(answer){
+      //add connection query here <----- The query here needs to be defined*****
+      connectionSettings.query("INSERT INTO department (name) VALUES (?)", [answer.deptartmentName] , function(err, res) {
+        if (err) throw err;
+        //Creates a table of response fr the Department
+        console.table(res)
+        startScreen()
+      })
+})
+}
 
-// }
-
-// function addRole() {
-
-// }
+function addRole() {
+  inquirer.prompt([
+    {
+    type: "input",
+    message: "What is the role name?",
+    name: "roleName"
+    },
+    {
+      type: "input",
+      message: "What is the role name?",
+      name: "roleName"
+    },
+  ])
+}
 
 // function addEmployee() {
 
@@ -110,4 +149,9 @@ function startProgram() {
 // function updateEmployee() {
 
 // }
+
+function quit () {
+  connection.end();
+  process.exit();
+}
 
