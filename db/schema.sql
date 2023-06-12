@@ -14,7 +14,7 @@ CREATE TABLE roles(
     id INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     title VARCHAR(30) NOT NULL,
     -- the first int is the number of numbers to display, the second is decimal places.
-    salary DECIMAL(5,2) NOT  NULL,
+    salary INT NOT  NULL,
     department_id INT
 );
 

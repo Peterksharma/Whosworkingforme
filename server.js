@@ -93,23 +93,32 @@ function startProgram() {
     })
   }
 //Function Junction (look to maybe export some functions out of file to keep it clean)
-// function viewDepartments() {
-
-// }
+function viewDepartments() {
+    let query = "SELECT * FROM departments";
+    connection.query(query, function(err, res){
+      if (err) throw err;
+      console.table(res);
+      startProgram();
+    })
+}
 
 function viewRoles() {
-  
-  let query = "SELECT * FROM roles";
-  connectionSettings.query(query, function(err, res){
-    if (err) throw err,
+  let query = `SELECT roles.id, roles.title, roles.salary, departments.department_name FROM roles INNER JOIN departments ON roles.department_id = departments.id`;
+  connection.query(query, function(err, res){
+    if (err) throw err;
     console.table(res);
-    startScreen();
+    startProgram();
   })
 }
 
-// function viewEmployees() {
-
-// 
+function viewEmployees() {
+  let query = "SELECT * FROM employee";
+  connection.query(query, function(err, res){
+    if (err) throw err;
+    console.table(res);
+    startProgram();
+  })
+}
 
 function addDepartment() {
   inquirer.prompt({
@@ -118,11 +127,11 @@ function addDepartment() {
     name: "departmentName"
   }).then(function(answer){
       //add connection query here <----- The query here needs to be defined*****
-      connectionSettings.query("INSERT INTO department (name) VALUES (?)", [answer.deptartmentName] , function(err, res) {
+      connection.query("INSERT INTO department (name) VALUES (?)", [answer.deptartmentName] , function(err, res) {
         if (err) throw err;
         //Creates a table of response fr the Department
         console.table(res)
-        startScreen()
+        startProgram()
       })
 })
 }
