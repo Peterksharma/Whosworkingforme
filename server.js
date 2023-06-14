@@ -1,19 +1,3 @@
-
-//options to be used in the request
-// -   view all departments
-// -   view all roles
-// -   view all employees
-// -   add a department
-// -   add a role, add an employee
-// -   and update an employee role
-
-//Make the tables
-//Connect with keys
-//Fill seed with Data
-//
-
-
-
 const express = require('express');
 const inquirer = require('inquirer');
 const path = require('path');
@@ -103,6 +87,7 @@ function viewDepartments() {
 }
 
 function viewRoles() {
+  //The INNER JOIN keyword selects records that have matching values in both tables.
   let query = `SELECT roles.id, roles.title, roles.salary, departments.department_name FROM roles INNER JOIN departments ON roles.department_id = departments.id`;
   connection.query(query, function(err, res){
     if (err) throw err;
@@ -112,7 +97,9 @@ function viewRoles() {
 }
 
 function viewEmployees() {
-  let query = "SELECT * FROM employee";
+  // The LEFT JOIN keyword returns all records from the left table (table1), and the matching records from the right table (table2). The result is 0 records from the right side, if there is no match.
+  let query = `SELECT employee.id, employee.first_name, employee.last_name, roles.title, roles.department_id, roles.salary, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee
+  LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id LEFT JOIN employee manager ON employee.manager_id = manager.id`;
   connection.query(query, function(err, res){
     if (err) throw err;
     console.table(res);
@@ -127,16 +114,17 @@ function addDepartment() {
     name: "departmentName"
   }).then(function(answer){
       //add connection query here <----- The query here needs to be defined*****
-      connection.query("INSERT INTO department (name) VALUES (?)", [answer.deptartmentName] , function(err, res) {
+      connection.query("INSERT INTO departments (department_name) VALUES (?)", [answer.departmentName] , function(err, res) {
         if (err) throw err;
         //Creates a table of response fr the Department
-        console.table(res)
+        console.log('This department had been added.')
         startProgram()
       })
 })
 }
 
 function addRole() {
+  const roleNames = [];
   inquirer.prompt([
     {
     type: "input",
@@ -145,19 +133,34 @@ function addRole() {
     },
     {
       type: "input",
-      message: "What is the role name?",
-      name: "roleName"
+      message: "What is the salary of the role?",
+      name: "roleSalary"
     },
-  ])
+    {
+      type: "input",
+      message: "What Department?",
+      name: "department_id" 
+    }
+  ]).then(function(answer) {
+      // var departmentId = getDepartmentId(answer.roleDepartment);
+      connection.query("INSERT INTO role (title, salary, department_id VALUES  (?, ?, ?)",
+      [answer.roleName, answer.roleSalary, answer.department_id],
+      function (err, res) {
+        if (err) throw (err),
+        console.log("The Role has been Created"),
+        startProgram()
+      }
+      )
+  })
 }
 
-// function addEmployee() {
+function addEmployee() {
+  startProgram()
+}
 
-// }
-
-// function updateEmployee() {
-
-// }
+function updateEmployee() {
+  startProgram()
+}
 
 function quit () {
   connection.end();

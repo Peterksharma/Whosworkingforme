@@ -15,7 +15,9 @@ CREATE TABLE roles(
     title VARCHAR(30) NOT NULL,
     -- the first int is the number of numbers to display, the second is decimal places.
     salary INT NOT  NULL,
-    department_id INT
+    department_id INT,
+    -- FOREIGN KEY (column_name_in_child_table) REFERENCES parent_table(column_name_in_parent_table)
+    FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
 CREATE TABLE employee(
@@ -23,7 +25,8 @@ CREATE TABLE employee(
     first_name VARCHAR (30) NOT NULL,
     last_name VARCHAR (30) NOT  NULL,
     role_id INT NULL,
-    manager_id INT NULL
+    manager_id INT NULL,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
 -- USE registrar_db;
