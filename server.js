@@ -124,12 +124,11 @@ function addDepartment() {
 }
 
 function addRole() {
-  const roleNames = [];
   inquirer.prompt([
     {
-    type: "input",
-    message: "What is the role name?",
-    name: "roleName"
+      type: "input",
+      message: "What is the role name?",
+      name: "roleName"
     },
     {
       type: "input",
@@ -138,29 +137,180 @@ function addRole() {
     },
     {
       type: "input",
-      message: "What Department?",
-      name: "department_id" 
+      message: "What is the Department ID?",
+      name: "department_id"
     }
   ]).then(function(answer) {
-      // var departmentId = getDepartmentId(answer.roleDepartment);
-      connection.query("INSERT INTO role (title, salary, department_id VALUES  (?, ?, ?)",
+    connection.query(
+      "INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)", // Notice "roles" instead of "role"
       [answer.roleName, answer.roleSalary, answer.department_id],
       function (err, res) {
-        if (err) throw (err),
-        console.log("The Role has been Created"),
-        startProgram()
+        if (err) throw err;
+        console.log("The Role has been Created");
+        startProgram();
       }
-      )
-  })
+    );
+  });
 }
+
 
 function addEmployee() {
-  startProgram()
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "Enter the employee's first name:",
+      name: "firstName"
+    },
+    {
+      type: "input",
+      message: "Enter the employee's last name:",
+      name: "lastName"
+    },
+    {
+      type: "input",
+      message: "Enter the employee's role:",
+      name: "roleName"
+    },
+    {
+      type: "input",
+      message: "Enter the employee's manager's first name (leave empty if no manager):",
+      name: "managerFirstName"
+    }
+  ]).then(function(answer) {
+    // Fetch role_id for the provided role name
+    connection.query(
+      "SELECT id FROM roles WHERE title = ?",
+      [answer.roleName],
+      function (err, roleResults) {
+        if (err) throw err;
+        if (roleResults.length === 0) {
+          console.error("Role not found!");
+          startProgram();
+          return;
+        }
+
+        const roleId = roleResults[0].id;
+        
+        // If manager's name is provided, fetch manager_id
+        if (answer.managerFirstName) {
+          connection.query(
+            "SELECT id FROM employee WHERE first_name = ?",
+            [answer.managerFirstName],
+            function (err, managerResults) {
+              if (err) throw err;
+              if (managerResults.length === 0) {
+                console.error("Manager not found!");
+                startProgram();
+                return;
+              }
+
+              const managerId = managerResults[0].id;
+              insertEmployee(answer.firstName, answer.lastName, roleId, managerId);
+            }
+          );
+        } else {
+          // No manager provided, so insert employee with no manager
+          insertEmployee(answer.firstName, answer.lastName, roleId, null);
+        }
+      }
+    );
+  });
 }
 
-function updateEmployee() {
-  startProgram()
+function insertEmployee(firstName, lastName, roleId, managerId) {
+  connection.query(
+    "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)",
+    [firstName, lastName, roleId, managerId],
+    function (err, res) {
+      if (err) throw err;
+      console.log("The Employee has been Created");
+      startProgram();
+    }
+  );
 }
+
+// function updateEmployee() {
+//   startProgram()
+// }
+
+function updateEmployee() {
+  connection.query("SELECT CONCAT(first_name, ' ', last_name) AS fullName FROM employee", function(err, employees) {
+    if (err) throw err;
+
+    inquirer.prompt([
+      {
+        type: "list",
+        message: "Which employee would you like to update?",
+        name: "employeeName",
+        choices: employees.map(e => e.fullName)
+      },
+      {
+        type: "input",
+        message: "Enter the employee's new role:",
+        name: "roleName"
+      },
+      {
+        type: "input",
+        message: "Enter the employee's new manager's first name:",
+        name: "managerFirstName"
+      }
+    ]).then(function(answer) {
+      const [firstName, lastName] = answer.employeeName.split(' ');
+
+      if (answer.roleName) {
+        connection.query(
+          "SELECT id FROM roles WHERE title = ?",
+          [answer.roleName],
+          function(err, roleResults) {
+            if (err) throw err;
+            if (roleResults.length === 0) {
+              console.error("Role not found!");
+              startProgram();
+              return;
+            }
+
+            const roleId = roleResults[0].id;
+            
+            if (answer.managerFirstName) {
+              connection.query(
+                "SELECT id FROM employee WHERE first_name = ?",
+                [answer.managerFirstName],
+                function(err, managerResults) {
+                  if (err) throw err;
+                  if (managerResults.length === 0) {
+                    console.error("Manager not found!");
+                    startProgram();
+                    return;
+                  }
+
+                  const managerId = managerResults[0].id;
+                  performUpdate(firstName, lastName, roleId, managerId);
+                }
+              );
+            } else {
+              performUpdate(firstName, lastName, roleId, null);
+            }
+          }
+        );
+      } else {
+        startProgram();
+      }
+    });
+  });
+}
+
+function performUpdate(firstName, lastName, roleId, managerId) {
+  connection.query(
+    "UPDATE employee SET role_id = ?, manager_id = ? WHERE first_name = ? AND last_name = ?",
+    [roleId, managerId, firstName, lastName],
+    function(err, res) {
+      if (err) throw err;
+      console.log("The Employee has been Updated");
+      startProgram();
+    }
+  );
+}
+
 
 function quit () {
   connection.end();
